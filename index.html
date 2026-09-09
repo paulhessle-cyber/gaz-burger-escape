@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Gaz's Burger Escape</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="gameWrap">
+    <canvas id="game"></canvas>
+
+    <section id="hud" aria-live="polite">
+      <div class="brand">GAZ'S <span>BURGER ESCAPE</span></div>
+      <div class="bill">BILL <strong>£<span id="bill">0.00</span></strong></div>
+      <div class="stats">
+        <span id="lives">♥ ♥ ♥</span>
+        <span>🍔 <b id="burgers">0</b></span>
+        <span>BEST <b id="best">0</b></span>
+      </div>
+    </section>
+
+    <div id="message" class="message"></div>
+
+    <div id="controls">
+      <div id="joystick" class="joystick"><div class="stick"></div></div>
+      <button id="dash" class="dash" aria-label="Dash">🏃<small>DASH</small></button>
+    </div>
+
+    <section id="startScreen" class="overlay">
+      <div class="card">
+        <div class="burgerBig">🍔</div>
+        <h1>GAZ'S<br><span>BURGER ESCAPE</span></h1>
+        <p>They forgot to charge Gaz twice.<br><b>They've wised up.</b></p>
+        <button id="startBtn">RUN, GAZ! 🏃</button>
+        <small>Drag the joystick • Tap DASH • Reach the EXIT</small>
+      </div>
+    </section>
+
+    <section id="gameOver" class="overlay hidden">
+      <div class="card">
+        <div class="burgerBig">💸</div>
+        <h2 id="overTitle">CAUGHT!</h2>
+        <p id="overText">Gaz finally got the bill.</p>
+        <div class="finalScore">BURGERS ESCAPED <b id="finalBurgers">0</b></div>
+        <div class="finalScore">ESCAPE SCORE <b id="finalScore">0</b></div>
+        <button id="againBtn">TRY AGAIN</button>
+      </div>
+    </section>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
