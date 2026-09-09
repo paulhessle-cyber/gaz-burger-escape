@@ -1,7 +1,7 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const wrap = document.getElementById('gameWrap');
-const gazImg = new Image(); gazImg.src = 'assets/gaz.png';
+const gazImg = new Image(); gazImg.src = 'Assets/gaz.png';
 
 const ui = {
   start: document.getElementById('startScreen'), over: document.getElementById('gameOver'),
@@ -231,7 +231,7 @@ function drawGaz(){
   ctx.beginPath();ctx.moveTo(-9,45);ctx.lineTo(-19,62);ctx.moveTo(9,45);ctx.lineTo(19,61);ctx.stroke();
   // head
   const size=52;ctx.save();ctx.beginPath();ctx.arc(0,-3,size/2,0,Math.PI*2);ctx.clip();
-  if(gazImg.complete)ctx.drawImage(gazImg,-size/2,-size/2-2,size,size);
+  if(gazImg.complete && gazImg.naturalWidth>0)ctx.drawImage(gazImg,-size/2,-size/2-2,size,size);
   else {ctx.fillStyle="#d99070";ctx.beginPath();ctx.arc(0,0,size/2,0,Math.PI*2);ctx.fill()}
   ctx.restore();
   ctx.strokeStyle="#222";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,-3,size/2,0,Math.PI*2);ctx.stroke();
@@ -248,24 +248,56 @@ function loop(now){
 
 // joystick
 const joy=document.getElementById('joystick'),stick=joy.querySelector('.stick');
-let joyId=null;
-function joyMove(e){
+let joyTouchId=null,joyMouseDown=false;
+function joyMove(clientX,clientY){
   const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
-  let dx=e.clientX-cx,dy=e.clientY-cy,max=r.width*.34;const l=Math.hypot(dx,dy);
+  let dx=clientX-cx,dy=clientY-cy,max=r.width*.34;const l=Math.hypot(dx,dy);
   if(l>max){dx=dx/l*max;dy=dy/l*max}
   stick.style.transform=`translate(${dx}px,${dy}px)`;
   input.x=dx/max;input.y=dy/max;
 }
-joy.addEventListener('pointerdown',e=>{joyId=e.pointerId;joy.setPointerCapture(joyId);input.active=true;joyMove(e)});
-joy.addEventListener('pointermove',e=>{if(input.active&&e.pointerId===joyId)joyMove(e)});
-joy.addEventListener('pointerup',()=>{input.active=false;input.x=input.y=0;stick.style.transform='translate(0,0)'});
-joy.addEventListener('pointercancel',()=>{input.active=false;input.x=input.y=0;stick.style.transform='translate(0,0)'});
+function releaseJoystick(){
+  joyTouchId=null;joyMouseDown=false;input.active=false;input.x=input.y=0;
+  stick.style.transform='translate(0,0)';
+}
+function touchById(touches,id){
+  for(const touch of touches)if(touch.identifier===id)return touch;
+  return null;
+}
+joy.addEventListener('touchstart',e=>{
+  if(joyTouchId!==null)return;
+  const touch=e.changedTouches[0];
+  joyTouchId=touch.identifier;input.active=true;joyMove(touch.clientX,touch.clientY);
+  e.preventDefault();
+},{passive:false});
+document.addEventListener('touchmove',e=>{
+  if(joyTouchId===null)return;
+  const touch=touchById(e.touches,joyTouchId);
+  if(touch){joyMove(touch.clientX,touch.clientY);e.preventDefault()}
+},{passive:false});
+document.addEventListener('touchend',e=>{
+  if(joyTouchId!==null&&!touchById(e.touches,joyTouchId)){releaseJoystick();e.preventDefault()}
+},{passive:false});
+document.addEventListener('touchcancel',e=>{
+  if(joyTouchId!==null){releaseJoystick();e.preventDefault()}
+},{passive:false});
+
+// Mouse fallback keeps the controls usable on desktop without relying on touch emulation.
+joy.addEventListener('mousedown',e=>{
+  if(joyTouchId!==null)return;
+  joyMouseDown=true;input.active=true;joyMove(e.clientX,e.clientY);e.preventDefault();
+});
+document.addEventListener('mousemove',e=>{if(joyMouseDown)joyMove(e.clientX,e.clientY)});
+document.addEventListener('mouseup',()=>{if(joyMouseDown)releaseJoystick()});
+window.addEventListener('blur',releaseJoystick);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseJoystick()});
 
 function dash(){
   if(!running||dashCooldown>0)return;
   dashUntil=performance.now()+650;dashCooldown=2.3;burst(gaz.x,gaz.y,18);say("DASH!");
 }
-ui.dash.addEventListener('pointerdown',dash);
+ui.dash.addEventListener('touchstart',e=>{e.preventDefault();dash()},{passive:false});
+ui.dash.addEventListener('mousedown',e=>{e.preventDefault();dash()});
 window.addEventListener('keydown',e=>{keys[e.key]=true;if(e.key===' '||e.key==='Shift')dash()});
 window.addEventListener('keyup',e=>keys[e.key]=false);
 ui.startBtn.addEventListener('click',startGame);
